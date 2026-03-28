@@ -12,7 +12,7 @@ import com.uepb.ExprParser;
 import com.uepb.gui.GuiVizualizerTask;
 import com.uepb.interfaces.CompilerEngine;
 
-public class Antlr4BasicExample implements CompilerEngine{
+public class Antlr4BasicExample implements CompilerEngine {
 
     @Override
     public void execute(File input, File output, boolean verbose) throws IOException {
@@ -22,18 +22,26 @@ public class Antlr4BasicExample implements CompilerEngine{
         var parser = new ExprParser(tokens);
         var tree = parser.prog();
 
-        if(parser.getNumberOfSyntaxErrors() == 0){
-            var calculadora = new Calculadora();
-            calculadora.visitProg(tree);
-            var code = calculadora.getCode();
-            Files.writeString(output.toPath(), code);
-            System.out.println("Gerou o código");
+        if (parser.getNumberOfSyntaxErrors() > 0) {
+            System.err.println("Compilacao abortada: erros sintaticos encontrados.");
+            return;
         }
 
-        if(verbose){
+        var calculadora = new Calculadora();
+        calculadora.visitProg(tree);
+
+        if (calculadora.temErro()) {
+            System.err.println("Compilacao abortada: erros semanticos encontrados.");
+            return;
+        }
+
+        var code = calculadora.getCode();
+        Files.writeString(output.toPath(), code);
+        System.out.println("Gerou o codigo");
+
+        if (verbose) {
             var guiTask = new GuiVizualizerTask(parser, tree);
             guiTask.run();
         }
     }
-
 }
